@@ -17,14 +17,16 @@ import (
 	"github.com/johannes-kuhfuss/services_utils/date"
 	"github.com/johannes-kuhfuss/services_utils/logger"
 	"github.com/johannes-kuhfuss/shelly-prom/config"
+	"github.com/johannes-kuhfuss/shelly-prom/handlers"
 )
 
 var (
-	cfg    config.AppConfig
-	server http.Server
-	appEnd chan os.Signal
-	ctx    context.Context
-	cancel context.CancelFunc
+	cfg            config.AppConfig
+	server         http.Server
+	appEnd         chan os.Signal
+	ctx            context.Context
+	cancel         context.CancelFunc
+	statsUiHandler handlers.StatsUiHandler
 )
 
 func StartApp() {
@@ -110,9 +112,12 @@ func initServer() {
 }
 
 func wireApp() {
+	statsUiHandler = handlers.NewStatsUiHandler(&cfg)
 }
 
 func mapUrls() {
+	cfg.RunTime.Router.GET("/", statsUiHandler.StatusPage)
+	cfg.RunTime.Router.GET("/about", statsUiHandler.AboutPage)
 }
 
 func RegisterForOsSignals() {
