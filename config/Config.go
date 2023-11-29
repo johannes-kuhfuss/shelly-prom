@@ -25,6 +25,12 @@ type AppConfig struct {
 		Mode         string `envconfig:"GIN_MODE" default:"release"`
 		TemplatePath string `envconfig:"TEMPLATE_PATH" default:"./templates/"`
 	}
+	ShellyEM3 struct {
+		Host        string `envconfig:"SHELLY_HOST"`
+		User        string `envconfig:"SHELLY_USER"`
+		Password    string `envconfig:"SHELLY_PASS"`
+		IntervalSec int    `envconfig:"SHELLY_INTERVAL_SEC" default:"5"`
+	}
 	Metrics struct {
 	}
 	RunTime struct {
