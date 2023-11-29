@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -88,13 +89,31 @@ func GetJsonFromPollUrl(pollUrl string, user string, password string) (*domain.S
 		return nil, err
 	}
 	if resp.StatusCode == 404 {
-		err := errors.New("URl not found")
+		err := errors.New("URL not found")
 		logger.Error("Error while polling Shelly data", err)
 		return nil, err
 	}
+	if resp.StatusCode == 401 {
+		err := errors.New("could not authenticate")
+		logger.Error("Error while polling Shelly data", err)
+		return nil, err
+	}
+
 	defer resp.Body.Close()
 
-	// convert to JSON
+	body, err := io.ReadAll(resp.Body)
+
+	if err != nil {
+		logger.Error("Error while reading response body with Shelly data", err)
+		return nil, err
+	}
+	/*
+		err = json.Unmarshal(body, &shellyData)
+		if err != nil {
+			logger.Error("Error while coverting response body to JSON", err)
+			return nil, err
+		}*/
+	logger.Info(fmt.Sprintf("Data: %v", string(body)))
 
 	return &shellyData, nil
 }
