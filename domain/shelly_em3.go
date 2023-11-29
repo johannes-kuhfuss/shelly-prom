@@ -1,6 +1,6 @@
 package domain
 
-type shellyData struct {
+type ShellyData struct {
 	ID                  int     `json:"id"`
 	ACurrent            float64 `json:"a_current"`
 	AVoltage            float64 `json:"a_voltage"`

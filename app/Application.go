@@ -18,15 +18,17 @@ import (
 	"github.com/johannes-kuhfuss/services_utils/logger"
 	"github.com/johannes-kuhfuss/shelly-prom/config"
 	"github.com/johannes-kuhfuss/shelly-prom/handlers"
+	"github.com/johannes-kuhfuss/shelly-prom/service"
 )
 
 var (
-	cfg            config.AppConfig
-	server         http.Server
-	appEnd         chan os.Signal
-	ctx            context.Context
-	cancel         context.CancelFunc
-	statsUiHandler handlers.StatsUiHandler
+	cfg               config.AppConfig
+	server            http.Server
+	appEnd            chan os.Signal
+	ctx               context.Context
+	cancel            context.CancelFunc
+	statsUiHandler    handlers.StatsUiHandler
+	shellyPollService service.DefaultShellyPollService
 )
 
 func StartApp() {
@@ -45,6 +47,7 @@ func StartApp() {
 	RegisterForOsSignals()
 
 	go startServer()
+	go startShellyPolling()
 
 	<-appEnd
 	cleanUp()
@@ -113,6 +116,7 @@ func initServer() {
 
 func wireApp() {
 	statsUiHandler = handlers.NewStatsUiHandler(&cfg)
+	shellyPollService = service.NewShellyPollService(&cfg)
 }
 
 func mapUrls() {
@@ -139,6 +143,10 @@ func startServer() {
 			panic(err)
 		}
 	}
+}
+
+func startShellyPolling() {
+	shellyPollService.Poll()
 }
 
 func cleanUp() {

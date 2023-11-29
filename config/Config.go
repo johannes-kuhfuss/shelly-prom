@@ -34,9 +34,10 @@ type AppConfig struct {
 	Metrics struct {
 	}
 	RunTime struct {
-		Router     *gin.Engine
-		ListenAddr string
-		StartDate  time.Time
+		Router        *gin.Engine
+		ListenAddr    string
+		StartDate     time.Time
+		RunShellyPoll bool
 	}
 }
 
@@ -51,6 +52,7 @@ func InitConfig(file string, config *AppConfig) api_error.ApiErr {
 	if err != nil {
 		return api_error.NewInternalServerError("Could not initalize configuration. Check your environment variables", err)
 	}
+	config.RunTime.RunShellyPoll = false
 	logger.Info("Done initalizing configuration")
 	return nil
 }
