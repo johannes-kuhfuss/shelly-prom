@@ -75,12 +75,10 @@ func ShellyPollRun(s DefaultShellyPollService) {
 	logger.Info(fmt.Sprintf("Url: %v", pollUrl.String()))
 	shellyState, err := GetJsonFromPollUrl(pollUrl.String())
 	if err == nil {
-		// update metrics
-		_ = shellyState
+		UpdateMetrics(*shellyState, s)
 	} else {
 		logger.Error("Error while retrieving data from Shelly: ", err)
 	}
-
 }
 
 func GetJsonFromPollUrl(pollUrl string) (*domain.ShellyData, error) {
@@ -120,4 +118,32 @@ func GetJsonFromPollUrl(pollUrl string) (*domain.ShellyData, error) {
 	}
 
 	return &shellyData, nil
+}
+
+func UpdateMetrics(data domain.ShellyData, s DefaultShellyPollService) {
+	// A-Phase
+	s.Cfg.Metrics.VoltageGauge.WithLabelValues(s.Cfg.ShellyEM3.Host, "A-Phase").Set(data.AVoltage)
+	s.Cfg.Metrics.CurrentGauge.WithLabelValues(s.Cfg.ShellyEM3.Host, "A-Phase").Set(data.ACurrent)
+	s.Cfg.Metrics.ActivePowerGauge.WithLabelValues(s.Cfg.ShellyEM3.Host, "A-Phase").Set(data.AActPower)
+	s.Cfg.Metrics.ApparentPowerGauge.WithLabelValues(s.Cfg.ShellyEM3.Host, "A-Phase").Set(data.AAprtPower)
+	s.Cfg.Metrics.PowerFactorGauge.WithLabelValues(s.Cfg.ShellyEM3.Host, "A-Phase").Set(data.APf)
+	s.Cfg.Metrics.FrequencyGauge.WithLabelValues(s.Cfg.ShellyEM3.Host, "A-Phase").Set(data.AFreq)
+	// B-Phase
+	s.Cfg.Metrics.VoltageGauge.WithLabelValues(s.Cfg.ShellyEM3.Host, "B-Phase").Set(data.BVoltage)
+	s.Cfg.Metrics.CurrentGauge.WithLabelValues(s.Cfg.ShellyEM3.Host, "B-Phase").Set(data.BCurrent)
+	s.Cfg.Metrics.ActivePowerGauge.WithLabelValues(s.Cfg.ShellyEM3.Host, "B-Phase").Set(data.BActPower)
+	s.Cfg.Metrics.ApparentPowerGauge.WithLabelValues(s.Cfg.ShellyEM3.Host, "B-Phase").Set(data.BAprtPower)
+	s.Cfg.Metrics.PowerFactorGauge.WithLabelValues(s.Cfg.ShellyEM3.Host, "B-Phase").Set(data.BPf)
+	s.Cfg.Metrics.FrequencyGauge.WithLabelValues(s.Cfg.ShellyEM3.Host, "B-Phase").Set(data.BFreq)
+	// C-Phase
+	s.Cfg.Metrics.VoltageGauge.WithLabelValues(s.Cfg.ShellyEM3.Host, "C-Phase").Set(data.CVoltage)
+	s.Cfg.Metrics.CurrentGauge.WithLabelValues(s.Cfg.ShellyEM3.Host, "C-Phase").Set(data.CCurrent)
+	s.Cfg.Metrics.ActivePowerGauge.WithLabelValues(s.Cfg.ShellyEM3.Host, "C-Phase").Set(data.CActPower)
+	s.Cfg.Metrics.ApparentPowerGauge.WithLabelValues(s.Cfg.ShellyEM3.Host, "C-Phase").Set(data.CAprtPower)
+	s.Cfg.Metrics.PowerFactorGauge.WithLabelValues(s.Cfg.ShellyEM3.Host, "C-Phase").Set(data.CPf)
+	s.Cfg.Metrics.FrequencyGauge.WithLabelValues(s.Cfg.ShellyEM3.Host, "C-Phase").Set(data.CFreq)
+	// Sums
+	s.Cfg.Metrics.CurrentGauge.WithLabelValues(s.Cfg.ShellyEM3.Host, "All Phases").Set(data.TotalCurrent)
+	s.Cfg.Metrics.ActivePowerGauge.WithLabelValues(s.Cfg.ShellyEM3.Host, "All Phases").Set(data.TotalActPower)
+	s.Cfg.Metrics.ApparentPowerGauge.WithLabelValues(s.Cfg.ShellyEM3.Host, "All Phases").Set(data.TotalAprtPower)
 }
