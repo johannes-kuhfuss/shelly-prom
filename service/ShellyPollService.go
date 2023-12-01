@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -68,7 +69,11 @@ func ShellyPollRun(s DefaultShellyPollService) {
 		Path:     "/rpc/EM.GetStatus",
 		RawQuery: "id=0",
 	}
-	shellyState, err := GetJsonFromPollUrl(pollUrl.String(), s.Cfg.ShellyEM3.User, s.Cfg.ShellyEM3.Password)
+	if s.Cfg.ShellyEM3.UseBasicAuth {
+		pollUrl.User = url.UserPassword(s.Cfg.ShellyEM3.User, s.Cfg.ShellyEM3.Password)
+	}
+	logger.Info(fmt.Sprintf("Url: %v", pollUrl.String()))
+	shellyState, err := GetJsonFromPollUrl(pollUrl.String())
 	if err == nil {
 		// update metrics
 		_ = shellyState
@@ -78,11 +83,11 @@ func ShellyPollRun(s DefaultShellyPollService) {
 
 }
 
-func GetJsonFromPollUrl(pollUrl string, user string, password string) (*domain.ShellyData, error) {
+func GetJsonFromPollUrl(pollUrl string) (*domain.ShellyData, error) {
 	var shellyData domain.ShellyData
 
 	req, _ := http.NewRequest("GET", pollUrl, nil)
-	req.SetBasicAuth(user, password)
+
 	resp, err := httpShellyPollClient.Do(req)
 	if err != nil {
 		logger.Error("Error while polling Shelly data", err)
@@ -107,13 +112,12 @@ func GetJsonFromPollUrl(pollUrl string, user string, password string) (*domain.S
 		logger.Error("Error while reading response body with Shelly data", err)
 		return nil, err
 	}
-	/*
-		err = json.Unmarshal(body, &shellyData)
-		if err != nil {
-			logger.Error("Error while coverting response body to JSON", err)
-			return nil, err
-		}*/
-	logger.Info(fmt.Sprintf("Data: %v", string(body)))
+
+	err = json.Unmarshal(body, &shellyData)
+	if err != nil {
+		logger.Error("Error while coverting response body to JSON", err)
+		return nil, err
+	}
 
 	return &shellyData, nil
 }

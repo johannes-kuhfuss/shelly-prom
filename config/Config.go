@@ -9,6 +9,7 @@ import (
 	"github.com/johannes-kuhfuss/services_utils/logger"
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type AppConfig struct {
@@ -26,12 +27,19 @@ type AppConfig struct {
 		TemplatePath string `envconfig:"TEMPLATE_PATH" default:"./templates/"`
 	}
 	ShellyEM3 struct {
-		Host        string `envconfig:"SHELLY_HOST"`
-		User        string `envconfig:"SHELLY_USER"`
-		Password    string `envconfig:"SHELLY_PASS"`
-		IntervalSec int    `envconfig:"SHELLY_INTERVAL_SEC" default:"5"`
+		Host         string `envconfig:"SHELLY_HOST"`
+		User         string `envconfig:"SHELLY_USER"`
+		Password     string `envconfig:"SHELLY_PASS"`
+		UseBasicAuth bool   `envconfig:"SHELLY_USE_BASIC_AUTH" default:"false"`
+		IntervalSec  int    `envconfig:"SHELLY_INTERVAL_SEC" default:"5"`
 	}
 	Metrics struct {
+		VoltageGauge       prometheus.GaugeVec
+		CurrentGauge       prometheus.GaugeVec
+		ActivePowerGauge   prometheus.GaugeVec
+		ApparentPowerGauge prometheus.GaugeVec
+		PowerFactorGauge   prometheus.GaugeVec
+		FrequencyGauge     prometheus.GaugeVec
 	}
 	RunTime struct {
 		Router        *gin.Engine
