@@ -12,6 +12,7 @@ import (
 	"github.com/johannes-kuhfuss/services_utils/logger"
 	"github.com/johannes-kuhfuss/shelly-prom/config"
 	"github.com/johannes-kuhfuss/shelly-prom/domain"
+	"github.com/mongodb-forks/digest"
 )
 
 type ShellyPollService interface {
@@ -24,23 +25,25 @@ type DefaultShellyPollService struct {
 
 var (
 	httpShellyPollTr     http.Transport
+	httpShellyDigestTr   digest.Transport
 	httpShellyPollClient http.Client
 )
 
 func NewShellyPollService(cfg *config.AppConfig) DefaultShellyPollService {
-	InitShellyPollHttp()
+	InitShellyPollHttp(cfg)
 	return DefaultShellyPollService{
 		Cfg: cfg,
 	}
 }
 
-func InitShellyPollHttp() {
+func InitShellyPollHttp(cfg *config.AppConfig) {
 	httpShellyPollTr = http.Transport{
 		DisableKeepAlives:  false,
 		DisableCompression: false,
 		MaxIdleConns:       0,
 		IdleConnTimeout:    0,
 	}
+	httpShellyDigestTr = *digest.NewTransport(cfg.ShellyEM3.User, cfg.ShellyEM3.Password)
 	httpShellyPollClient = http.Client{
 		Transport: &httpShellyPollTr,
 		Timeout:   5 * time.Second,
@@ -69,24 +72,32 @@ func ShellyPollRun(s DefaultShellyPollService) {
 		Path:     "/rpc/EM.GetStatus",
 		RawQuery: "id=0",
 	}
-	if s.Cfg.ShellyEM3.UseBasicAuth {
-		pollUrl.User = url.UserPassword(s.Cfg.ShellyEM3.User, s.Cfg.ShellyEM3.Password)
-	}
-	logger.Info(fmt.Sprintf("Url: %v", pollUrl.String()))
-	shellyState, err := GetJsonFromPollUrl(pollUrl.String())
+	shellyState, err := GetJsonFromPollUrl(pollUrl.String(), s.Cfg.ShellyEM3.UseBasicAuth)
 	if err == nil {
 		UpdateMetrics(*shellyState, s)
+		s.Cfg.RunTime.ShellyCurrentData = *shellyState
 	} else {
 		logger.Error("Error while retrieving data from Shelly: ", err)
 	}
 }
 
-func GetJsonFromPollUrl(pollUrl string) (*domain.ShellyData, error) {
-	var shellyData domain.ShellyData
+func GetJsonFromPollUrl(pollUrl string, digest bool) (*domain.ShellyData, error) {
+	var (
+		shellyData domain.ShellyData
+		err        error
+		resp       *http.Response
+	)
 
-	req, _ := http.NewRequest("GET", pollUrl, nil)
-
-	resp, err := httpShellyPollClient.Do(req)
+	req, err := http.NewRequest("GET", pollUrl, nil)
+	if err != nil {
+		logger.Error("Error while forming HTTP request", err)
+		return nil, err
+	}
+	if digest {
+		resp, err = httpShellyDigestTr.RoundTrip(req)
+	} else {
+		resp, err = httpShellyPollClient.Do(req)
+	}
 	if err != nil {
 		logger.Error("Error while polling Shelly data", err)
 		return nil, err

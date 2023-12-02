@@ -63,5 +63,4 @@ func initMetrics() {
 	prometheus.MustRegister(cfg.Metrics.ApparentPowerGauge)
 	prometheus.MustRegister(cfg.Metrics.PowerFactorGauge)
 	prometheus.MustRegister(cfg.Metrics.FrequencyGauge)
-
 }

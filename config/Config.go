@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/johannes-kuhfuss/services_utils/api_error"
 	"github.com/johannes-kuhfuss/services_utils/logger"
+	"github.com/johannes-kuhfuss/shelly-prom/domain"
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/prometheus/client_golang/prometheus"
@@ -31,7 +32,7 @@ type AppConfig struct {
 		User         string `envconfig:"SHELLY_USER"`
 		Password     string `envconfig:"SHELLY_PASS"`
 		UseBasicAuth bool   `envconfig:"SHELLY_USE_BASIC_AUTH" default:"false"`
-		IntervalSec  int    `envconfig:"SHELLY_INTERVAL_SEC" default:"5"`
+		IntervalSec  int    `envconfig:"SHELLY_INTERVAL_SEC" default:"1"`
 	}
 	Metrics struct {
 		VoltageGauge       prometheus.GaugeVec
@@ -42,10 +43,11 @@ type AppConfig struct {
 		FrequencyGauge     prometheus.GaugeVec
 	}
 	RunTime struct {
-		Router        *gin.Engine
-		ListenAddr    string
-		StartDate     time.Time
-		RunShellyPoll bool
+		Router            *gin.Engine
+		ListenAddr        string
+		StartDate         time.Time
+		RunShellyPoll     bool
+		ShellyCurrentData domain.ShellyData
 	}
 }
 
